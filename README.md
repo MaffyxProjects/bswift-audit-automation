@@ -1,7 +1,3 @@
-Here's a README for the GitHub project:
-
----
-
 # Audit File Processing Automation
 
 ## Overview
