@@ -1,0 +1,89 @@
+function main(workbook: ExcelScript.Workbook) {
+
+    //Variable to grab all active sheets
+    let sheets = workbook.getWorksheets();
+
+  // Audit 7 formatting
+  for (let sheet of sheets) {
+    let sheet7Name = sheet.getName();
+
+    if (sheet7Name === 'Audit 7-Demo file vs Census') {
+      sheet.getRange("C:F").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("E1").setValue("OM Remark");
+    }
+  }
+
+    // Delete specific sheets that are processed separately
+    let sheetsToDelete = [
+        'Audit 1-Audit Benefits',
+        'Audit 2-Tier Mismatch',
+        'Audit 3-Missing Tier',
+        'Audit 4-Terminated with Coverag',
+        'Audit 5-Dependent Member Status',
+        'Audit 6-Overage Dependent Listi',
+        'Audit 8-Auto Enroll',
+        'Enrollment Changes Report'
+    ];
+
+    for (let sheetName of sheetsToDelete) {
+        let sheet = workbook.getWorksheet(sheetName);
+        if (sheet) {
+            sheet.delete();
+        }
+    }
+
+    //reinitialize sheets for updates
+    sheets = workbook.getWorksheets();
+
+    //create a summary tab:
+    const summarySheetName = "Summary";
+
+    // Check if the summary sheet already exists
+    let summarySheet = workbook.getWorksheet(summarySheetName);
+    if (summarySheet) {
+
+        // Clear existing summary sheet if it exists
+        summarySheet.getUsedRange().clear();
+    } else {
+
+        // Create a new summary sheet
+        summarySheet = workbook.addWorksheet(summarySheetName);
+    }
+
+    // Add headers to the summary sheet
+    summarySheet.getRange("A1").setValue("Audit");
+    summarySheet.getRange("B1").setValue("Number of Impacts ");
+
+    // Initialize row index for the summary sheet
+    let rowIndex = 2;
+
+    // Loop through all sheets and gather row counts
+    for (let sheet of sheets) {
+        // Skip the summary sheet itself
+        if (sheet.getName() === summarySheetName) {
+            continue;
+        }
+
+        // Get the name and row count of the current sheet
+        let sheetName = sheet.getName();
+        let usedRange = sheet.getUsedRange();
+        let rowCount = usedRange ? usedRange.getRowCount() - 1 : 0; // Subtract 1 for the header row
+        
+        if (rowCount <= 0) {
+          continue; // Skip empty sheets or those with no data rows
+        }
+
+        // Ensure the row count is not negative
+        rowCount = Math.max(rowCount, 0);
+
+        // Write the sheet name and row count to the summary sheet
+        summarySheet.getRange(`A${rowIndex}`).setValue(sheetName);
+        summarySheet.getRange(`B${rowIndex}`).setValue(rowCount);
+
+        // Increment row index for the next entry
+        rowIndex++;
+
+         // Auto fit the columns of all cells on selectedSheet
+        summarySheet.getRange().getFormat().autofitColumns();
+    }
+}
