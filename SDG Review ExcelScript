@@ -1,0 +1,124 @@
+function main(workbook: ExcelScript.Workbook) {
+  //set a variable with all the existing sheets
+  let sheets = workbook.getWorksheets();
+
+  // Delete all empty sheets
+  for (let sheet of sheets) {
+    let usedRange = sheet.getUsedRange();
+    if (usedRange !== undefined && usedRange.getRowCount() === 1) {
+      sheet.delete();
+    }
+  }
+
+  // Reinitialize sheets list after deletion
+  sheets = workbook.getWorksheets();
+
+  //Format column headers
+  for (let sheet of sheets) {
+    let sheetName = sheet.getName();
+
+    // Audit 1 formatting
+    if (sheetName === 'Audit 1-Audit Benefits') {
+      sheet.getRange("K:O").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("L1").setValue("SDG Remark");
+    }
+
+    // Audit 2 formatting
+    if (sheetName === 'Audit 2-Tier Mismatch') {
+      sheet.getRange("L:P").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("M1").setValue("SDG Remark");
+    }
+
+    // Audit 3 formatting
+    if (sheetName === 'Audit 3-Missing Tier') {
+      sheet.getRange("I:M").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("J1").setValue("SDG Remark");
+    }
+
+    // Audit 4 formatting
+    if (sheetName === 'Audit 4-Terminated with Coverag') {
+      sheet.getRange("R:V").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("S1").setValue("SDG Remark");
+    }
+
+    // Audit 5 formatting
+    if (sheetName === 'Audit 5-Dependent Member Status') {
+      sheet.getRange("AM:AQ").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("AN1").setValue("SDG Remark");
+    }
+
+    // Audit 6 formatting
+    if (sheetName === 'Audit 6-Dependent Member Status') {
+      sheet.getRange("AB:AF").delete(ExcelScript.DeleteShiftDirection.left);
+      sheet.getRange("AC1").setValue("SDG Remark");
+    }
+  }
+
+  // Delete specific sheets that are processed separately
+  let sheetsToDelete = [
+    'Audit 7-Demo file vs Census',
+    'Audit 8-Auto Enroll',
+    'Enrollment Changes Report'
+  ];
+
+  for (let sheetName of sheetsToDelete) {
+    let sheet = workbook.getWorksheet(sheetName);
+    if (sheet) {
+      sheet.delete();
+    }
+  }
+
+  // Reinitialize sheets list after deletion
+  sheets = workbook.getWorksheets();
+
+  //create a summary tab:
+  const summarySheetName = "Summary";
+
+  // Check if the summary sheet already exists
+  let summarySheet = workbook.getWorksheet(summarySheetName);
+  if (summarySheet) {
+    // Clear existing summary sheet if it exists
+    summarySheet.getUsedRange().clear();
+  } else {
+    // Create a new summary sheet
+    summarySheet = workbook.addWorksheet(summarySheetName);
+  }
+
+  // Add headers to the summary sheet
+  summarySheet.getRange("A1").setValue("Audit");
+  summarySheet.getRange("B1").setValue("Number of Impacts");
+
+  // Initialize row index for the summary sheet
+  let rowIndex = 2;
+
+  // Loop through all sheets and gather row counts
+  for (let sheet of sheets) {
+    // Skip the summary sheet itself
+    if (sheet.getName() === summarySheetName) {
+      continue;
+    }
+   
+    // Get the name and row count of the current sheet
+    let sheetName= sheet.getName();
+    let usedRange = sheet.getUsedRange();
+    let rowCount = usedRange ? usedRange.getRowCount() - 1 : 0; // Subtract 1 for the header row
+
+    if (rowCount <= 0) {
+      continue; // Skip empty sheets or those with no data rows
+    }
+    // Ensure the row count is not negative
+    rowCount = Math.max(rowCount, 0);
+
+    // Write the sheet name and row count to the summary sheet
+    summarySheet.getRange(`A${rowIndex}`).setValue(sheetName);
+    summarySheet.getRange(`B${rowIndex}`).setValue(rowCount);
+
+    // Increment row index for the next entry
+    rowIndex++;
+
+     // Auto fit the columns of all cells on selectedSheet
+    summarySheet.getRange().getFormat().autofitColumns();
+  }
+}
+
+
